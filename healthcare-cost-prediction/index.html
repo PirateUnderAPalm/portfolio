@@ -112,13 +112,43 @@
       <div class="kpi"><div class="kpi-num">10%</div><div class="kpi-label">Recall at default cutoff</div><div class="kpi-desc">Left at 0.5, it flags very few people. Use it as a ranker.</div></div>
     </div>
     <div class="callout">
-      <p>Used the way an employer would actually use it (score everyone, sort and reach out to the top fifth first), outreach lands on a high-cost person about twice as often as spreading it evenly. That's a useful screening tool. It doesn't predict any one person's cost, and nine demographic and condition variables were never going to.</p>
+      <p>Used the way an employer would actually use it (score everyone, sort and reach out to the top fifth first), outreach lands on a high-cost person about twice as often as spreading it evenly. That's a useful screening tool. It doesn't predict any one person's cost, and eight demographic and condition variables were never going to.</p>
     </div>
     <p style="margin-top:16px;font-size:13px">The ranking and recall figures come from re-running the submitted model after the capstone. The submitted presentation reported accuracy and AUC.</p>
   </section>
 
   <section>
-    <div class="section-label">06 · Limits and next steps</div>
+    <div class="section-label">06 · Sizing the list to the budget</div>
+    <h2>A diabetes list does about as well, and that's the useful finding</h2>
+    <p>An employer doesn't pick a probability cutoff. They pick how many people they can afford to reach. So I re-ran the submitted model on the same holdout of 2,116 people and reported what each list size buys.</p>
+    <div style="overflow-x:auto"><table class="data">
+      <tr><th>Reach the top</th><th class="num">People</th><th class="num">High-cost found</th><th class="num">Precision</th><th class="num">Share of all spending</th></tr>
+      <tr><td>5%</td><td class="num">106</td><td class="num">51</td><td class="num">48%</td><td class="num">11%</td></tr>
+      <tr><td>10%</td><td class="num">212</td><td class="num">97</td><td class="num">46%</td><td class="num">20%</td></tr>
+      <tr><td>20%</td><td class="num">423</td><td class="num">165</td><td class="num">39%</td><td class="num">36%</td></tr>
+      <tr><td>30%</td><td class="num">635</td><td class="num">225</td><td class="num">35%</td><td class="num">48%</td></tr>
+      <tr><td>50%</td><td class="num">1,058</td><td class="num">311</td><td class="num">29%</td><td class="num">68%</td></tr>
+    </table></div>
+    <p style="margin-top:12px;font-size:13px">A random list of any size finds high-cost people about 20% of the time and captures about its own share of spending.</p>
+
+    <p style="margin-top:24px">Then I checked what I should have checked first, the score of a rule anyone could apply in a spreadsheet. Each rule below is compared with the model given the same number of slots.</p>
+    <div style="overflow-x:auto"><table class="data">
+      <tr><th>Rule</th><th class="num">Reach</th><th class="num">Rule precision</th><th class="num">Model precision</th><th class="num">Model minus rule, 95% CI</th></tr>
+      <tr><td>Diabetes diagnosis</td><td class="num">15%</td><td class="num">40.8%</td><td class="num">41.7%</td><td class="num">+0.9 pts (−2.9 to +4.0)</td></tr>
+      <tr><td>Two or more conditions</td><td class="num">31%</td><td class="num">32.9%</td><td class="num">34.9%</td><td class="num">+2.0 pts (−0.3 to +4.3)</td></tr>
+      <tr><td>All three conditions</td><td class="num">9%</td><td class="num">44.6%</td><td class="num">46.2%</td><td class="num">+1.5 pts (−3.5 to +6.8)</td></tr>
+      <tr><td>Age 61+</td><td class="num">44%</td><td class="num">26.7%</td><td class="num">31.1%</td><td class="num">+4.4 pts (+2.6 to +6.1)</td></tr>
+    </table></div>
+    <p style="margin-top:12px;font-size:13px">Intervals from 2,000 bootstrap resamples of the holdout. The model clearly beats an age cutoff. Against the diagnosis rules the gap is inside the noise.</p>
+
+    <div class="callout">
+      <p>The model is where the diabetes rule came from, since diabetes carried the largest cost effect in the regression. Once it surfaced, a plain list matched the model's precision. A list is also free to build and easy to explain to anyone on a benefits team. The model still earns a place in two cases. One is a budget that doesn't fit the rule, because a diabetes list is 15% of people whether you can afford 8% or 25%. The other is as the check that tells you the simple rule isn't leaving much on the table.</p>
+    </div>
+    <p style="margin-top:16px;font-size:13px">Reproducible from <code>notebooks/03_budget_analysis.py</code> in the capstone code, same split and random seed as the submitted model.</p>
+  </section>
+
+  <section>
+    <div class="section-label">07 · Limits and next steps</div>
     <h2>What these models can and can't support</h2>
     <div class="cards">
       <div class="card">
@@ -134,14 +164,14 @@
         <ul class="list">
           <li>Add insurance type, visit counts and prescription spend, all in MEPS and unused here.</li>
           <li>Use the two-year MEPS panel to follow the same people and see whether a new diagnosis raises their cost.</li>
-          <li>Tune the classifier threshold for the budget an employer actually has, and report precision at that cutoff.</li>
+          <li>Compare the model and the diabetes list on the two-year panel, to see which one holds up when the second year's costs come in.</li>
         </ul>
       </div>
     </div>
   </section>
 
   <section>
-    <div class="section-label">07 · Stack</div>
+    <div class="section-label">08 · Stack</div>
     <h2>Standard Python data science, start to finish</h2>
     <div class="stack">
       <div class="stack-item"><div class="stack-cat">Language</div><div class="stack-name">Python</div></div>
