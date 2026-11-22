@@ -51,7 +51,7 @@
       </div></div>
       <div class="step"><div class="step-num">03</div><div class="step-body">
         <div class="step-title">A small AWS budget</div>
-        <div class="step-desc">Cost shaped the architecture: a Lambda that stops and starts the RDS instance so idle compute isn't billed, S3-triggered batch ingestion instead of streaming and materialized views in MySQL so expensive queries aren't recomputed on every read.</div>
+        <div class="step-desc">Cost shaped the architecture: a Lambda that stops and starts the Aurora cluster so idle compute isn't billed, S3-triggered batch ingestion instead of streaming and materialized views in MySQL so expensive queries aren't recomputed on every read.</div>
       </div></div>
     </div>
   </section>
@@ -63,7 +63,7 @@
       <div class="cell">
         <div class="cell-label">Ingestion</div>
         <div class="cell-title">S3 + Lambda ETL</div>
-        <div class="cell-desc">Export files from all four systems land in S3. A Lambda fires on each file, identifies the source by its header pattern, applies that source's transformations and writes validated records to RDS.</div>
+        <div class="cell-desc">Export files from all four systems land in S3. A Lambda fires on each file, identifies the source by its header pattern, applies that source's transformations and writes validated records to Aurora MySQL.</div>
         <div class="chips"><span class="chip">AWS Lambda</span><span class="chip">S3</span><span class="chip">Python</span><span class="chip">pandas</span></div>
       </div>
       <div class="cell">
@@ -81,8 +81,8 @@
       <div class="cell">
         <div class="cell-label">Presentation</div>
         <div class="cell-title">Secure portal + Looker Studio</div>
-        <div class="cell-desc">An Amplify-hosted single-page app with Cognito sign-in gives role-based access. A two-tier Looker Studio layer delivers weekly and monthly operator performance reports to supervisors.</div>
-        <div class="chips"><span class="chip">Amplify</span><span class="chip">Cognito</span><span class="chip">API Gateway</span><span class="chip">Looker Studio</span></div>
+        <div class="cell-desc">A web portal on Elastic Beanstalk with Cognito sign-in gives role-based access. A two-tier Looker Studio layer delivers weekly and monthly operator performance reports to supervisors.</div>
+        <div class="chips"><span class="chip">Elastic Beanstalk</span><span class="chip">Cognito</span><span class="chip">Looker Studio</span></div>
       </div>
     </div>
   </section>
@@ -125,7 +125,7 @@
       </div></div>
       <div class="step"><div class="step-num">05</div><div class="step-body">
         <div class="step-title">Portal and scheduled reports</div>
-        <div class="step-desc">Authorized users see live metrics in the portal. Weekly and monthly Looker Studio reports generate on their own and go to supervisors.</div>
+        <div class="step-desc">Authorized users sign in through Cognito and see live metrics in the portal. Weekly and monthly Looker Studio reports generate on their own and go to supervisors.</div>
       </div></div>
     </div>
   </section>
@@ -161,10 +161,10 @@
     <h2>Serverless where it pays, SQL where the logic lives</h2>
     <div class="stack">
       <div class="stack-item"><div class="stack-cat">Compute</div><div class="stack-name">AWS Lambda</div></div>
-      <div class="stack-item"><div class="stack-cat">Storage</div><div class="stack-name">S3 + RDS MySQL</div></div>
+      <div class="stack-item"><div class="stack-cat">Storage</div><div class="stack-name">S3 + Aurora MySQL</div></div>
       <div class="stack-item"><div class="stack-cat">Auth</div><div class="stack-name">Cognito</div></div>
-      <div class="stack-item"><div class="stack-cat">API</div><div class="stack-name">API Gateway</div></div>
-      <div class="stack-item"><div class="stack-cat">Frontend</div><div class="stack-name">Amplify</div></div>
+      <div class="stack-item"><div class="stack-cat">DB tooling</div><div class="stack-name">MySQL Workbench</div></div>
+      <div class="stack-item"><div class="stack-cat">Web hosting</div><div class="stack-name">Elastic Beanstalk</div></div>
       <div class="stack-item"><div class="stack-cat">Reporting</div><div class="stack-name">Looker Studio</div></div>
       <div class="stack-item"><div class="stack-cat">ETL</div><div class="stack-name">Python / pandas</div></div>
       <div class="stack-item"><div class="stack-cat">DB logic</div><div class="stack-name">Stored procedures</div></div>
