@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TMC Performance Analytics | Jared Roso</title>
+<meta name="description" content="A serverless AWS data platform that unified four traffic operations systems into per-operator performance metrics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="page">
+
+  <nav class="topnav"><a href="../">&larr; All work</a></nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="tag">Case study &nbsp;·&nbsp; Data engineering &nbsp;·&nbsp; AWS</span>
+      <h1>TMC performance <em>analytics</em> platform</h1>
+      <p class="hero-sub">A full-stack AWS data platform that pulls four traffic operations systems into one schema and turns them into per-operator response metrics. Manual reconciliation became automated weekly and monthly reporting.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Solutions architect, sole technologist</span></div>
+        <div class="meta-item"><span class="meta-label">Client</span><span class="meta-value">Municipal transportation agency</span></div>
+        <div class="meta-item"><span class="meta-label">Data in production</span><span class="meta-value">Since October 2024</span></div>
+        <div class="meta-item"><span class="meta-label">Engagement</span><span class="meta-value">Consulting, end-to-end delivery</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">01 · The problem</div>
+    <h2>No way to see how operators were actually performing</h2>
+    <p>A regional traffic management center (TMC) ran four separate platforms for incident management, CCTV, dynamic message signs and work orders, and none of them talked to each other. Supervisors had no single view of operator activity, response times or SLA adherence. Reporting was manual, late and incomplete.</p>
+    <div class="callout">
+      <p>The client wanted to answer a basic question: are operators responding to incidents on time, and with the right tools? Every source used a different schema, format and identity model, so there was no foundation to answer it with.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">02 · Technical challenges</div>
+    <h2>Four systems that were never meant to talk to each other</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-title">The same person under different names</div>
+        <div class="step-desc">One operator could appear as a full name in one system, first initial plus surname in another and different capitalization in a third. Nothing could be measured per operator until a matching layer resolved every variant to one canonical operator record, with an alternate-names registry to catch new variants as they showed up.</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-title">No shared key between an incident and the response to it</div>
+        <div class="step-desc">Tying a camera verification (Genetec) or a sign activation (Centracs) back to a specific incident (Rekor) meant building a time-windowed join on camera IDs, sign IDs, operator identity and incident timestamps, across tables with no foreign keys between them.</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-title">A small AWS budget</div>
+        <div class="step-desc">Cost shaped the architecture: a Lambda that stops and starts the RDS instance so idle compute isn't billed, S3-triggered batch ingestion instead of streaming and materialized views in MySQL so expensive queries aren't recomputed on every read.</div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">03 · Architecture</div>
+    <h2>Event-driven ingestion into a batch metrics engine</h2>
+    <div class="grid2">
+      <div class="cell">
+        <div class="cell-label">Ingestion</div>
+        <div class="cell-title">S3 + Lambda ETL</div>
+        <div class="cell-desc">Export files from all four systems land in S3. A Lambda fires on each file, identifies the source by its header pattern, applies that source's transformations and writes validated records to RDS.</div>
+        <div class="chips"><span class="chip">AWS Lambda</span><span class="chip">S3</span><span class="chip">Python</span><span class="chip">pandas</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Identity resolution</div>
+        <div class="cell-title">Canonical operator registry</div>
+        <div class="cell-desc">A multi-pass matching procedure backfills operator relationships across every source table and resolves each name variant to one operator ID. Alternate names are stored and versioned.</div>
+        <div class="chips"><span class="chip">MySQL stored procedures</span><span class="chip">fuzzy matching</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Metrics engine</div>
+        <div class="cell-title">Batch stored procedures</div>
+        <div class="cell-desc">Stored procedures build materialized views in configurable date batches and compute SLA compliance, verification times and sign response metrics per operator per period. Refresh is incremental to keep compute time down.</div>
+        <div class="chips"><span class="chip">materialized views</span><span class="chip">incremental refresh</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Presentation</div>
+        <div class="cell-title">Secure portal + Looker Studio</div>
+        <div class="cell-desc">An Amplify-hosted single-page app with Cognito sign-in gives role-based access. A two-tier Looker Studio layer delivers weekly and monthly operator performance reports to supervisors.</div>
+        <div class="chips"><span class="chip">Amplify</span><span class="chip">Cognito</span><span class="chip">API Gateway</span><span class="chip">Looker Studio</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">04 · What it measures</div>
+    <h2>Operator KPIs per period and per incident type</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-num">120s</div><div class="kpi-label">Crash confirmation SLA</div><div class="kpi-desc">Tiered deadline: 120 seconds for crashes and 300 for every other incident type.</div></div>
+      <div class="kpi"><div class="kpi-num">≤300s</div><div class="kpi-label">Camera verification</div><div class="kpi-desc">Seconds from incident close to the first camera interaction.</div></div>
+      <div class="kpi"><div class="kpi-num">≤300s</div><div class="kpi-label">Sign activation</div><div class="kpi-desc">Seconds from incident start to the first message sign activation.</div></div>
+    </div>
+    <table class="data">
+      <tr><th>Metric</th><th>Grain</th></tr>
+      <tr><td>SLA compliance %</td><td>Per operator, per month and quarter</td></tr>
+      <tr><td>Response completion %</td><td>Incidents with both a camera check and a sign activation recorded</td></tr>
+      <tr><td>Crash response time</td><td>Average response isolated to crash events</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-label">05 · Data pipeline</div>
+    <h2>From four export files to one metrics layer</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-title">Source file ingestion</div>
+        <div class="step-desc">Exports from Rekor, Genetec CCTV, Centracs DMS and CityWorks land in their S3 folders. The Lambda identifies each one by its header signature and maps it to the canonical schema.</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-title">Operator identity resolution</div>
+        <div class="step-desc">Exact match first, then alias lookup, then fuzzy partial match. Resolved mappings are stored and reused by every later join.</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-title">Materialized incident base</div>
+        <div class="step-desc">The incident base view is rebuilt with operator relationships, camera IDs, sign IDs and the tiered SLA deadlines attached, giving every downstream metric one stable surface to join against.</div>
+      </div></div>
+      <div class="step"><div class="step-num">04</div><div class="step-body">
+        <div class="step-title">Metrics and view refresh</div>
+        <div class="step-desc">Stored procedures work through incidents in date batches with time-windowed joins to the camera and sign tables, then refresh the period views the reports read from.</div>
+      </div></div>
+      <div class="step"><div class="step-num">05</div><div class="step-body">
+        <div class="step-title">Portal and scheduled reports</div>
+        <div class="step-desc">Authorized users see live metrics in the portal. Weekly and monthly Looker Studio reports generate on their own and go to supervisors.</div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">06 · Outcomes</div>
+    <h2>From no visibility to automated accountability</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>For operations</h3>
+        <ul class="list">
+          <li>The first quantified view of each operator's SLA compliance, crash response and tool use</li>
+          <li>Supervisors went from no data to weekly and monthly reports that generate themselves</li>
+          <li>Camera verification and sign activation timed to the second instead of judged by impression</li>
+          <li>Incident history back to October 2024 for trend analysis</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Technical delivery</h3>
+        <ul class="list">
+          <li>Four unrelated source systems unified under one schema without touching any of them</li>
+          <li>Operator identity resolved across every source by a matching layer that keeps learning new variants</li>
+          <li>Stop/start automation and batch ingestion kept the AWS bill small</li>
+          <li>MySQL 8.0 to 8.4 compatibility reviewed and fixed ahead of the infrastructure upgrade</li>
+          <li>SOP documentation and a version control strategy handed over with the platform</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">07 · Stack</div>
+    <h2>Serverless where it pays, SQL where the logic lives</h2>
+    <div class="stack">
+      <div class="stack-item"><div class="stack-cat">Compute</div><div class="stack-name">AWS Lambda</div></div>
+      <div class="stack-item"><div class="stack-cat">Storage</div><div class="stack-name">S3 + RDS MySQL</div></div>
+      <div class="stack-item"><div class="stack-cat">Auth</div><div class="stack-name">Cognito</div></div>
+      <div class="stack-item"><div class="stack-cat">API</div><div class="stack-name">API Gateway</div></div>
+      <div class="stack-item"><div class="stack-cat">Frontend</div><div class="stack-name">Amplify</div></div>
+      <div class="stack-item"><div class="stack-cat">Reporting</div><div class="stack-name">Looker Studio</div></div>
+      <div class="stack-item"><div class="stack-cat">ETL</div><div class="stack-name">Python / pandas</div></div>
+      <div class="stack-item"><div class="stack-cat">DB logic</div><div class="stack-name">Stored procedures</div></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-note">Client name withheld · Metrics describe the production system · Jared Roso</span>
+    <a href="../">&larr; All work</a>
+  </footer>
+
+</div>
+</body>
+</html>

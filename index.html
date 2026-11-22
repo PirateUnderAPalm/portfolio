@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jared Roso | Selected Work</title>
+<meta name="description" content="Case studies in production AI systems, data engineering and health analytics from Jared Roso.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="tag">Selected work</span>
+      <h1>Jared Roso</h1>
+      <p class="hero-sub">Nearly twenty years in transportation operations technology, and these days building AI systems that run in production and get checked like it. Below are four projects with what I built, why it was hard and what happened.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="meta-label">Focus</span><span class="meta-value">Production AI systems · Data engineering · Analytics</span></div>
+        <div class="meta-item"><span class="meta-label">Education</span><span class="meta-value">M.S. Data Analytics, WGU · B.S. Computer Science, University of Maryland</span></div>
+        <div class="meta-item"><span class="meta-label">Site</span><span class="meta-value"><a href="https://jared.roso.us">jared.roso.us</a></span></div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">Case studies</div>
+    <div class="work">
+
+      <a class="work-card" href="ai-ticket-routing/">
+        <div class="work-top"><span class="work-num">01</span><span class="work-kind">AI systems · Production</span></div>
+        <div class="work-title">Field device ticket classifier with a reasoning cross-check</div>
+        <div class="work-desc">AI routing for a state transportation agency's maintenance tickets. A deterministic gate handles most tickets with no model call, and the rest are checked for agreement between the model's reasoning and its answer before anything is assigned.</div>
+        <div class="work-foot"><span class="work-metric">85% routed with no model call · $5 to $10/month</span><span class="chips" style="margin:0"><span class="chip">Claude</span><span class="chip">Python</span><span class="chip">Flask</span></span></div>
+      </a>
+
+      <a class="work-card" href="tmc-performance-analytics/">
+        <div class="work-top"><span class="work-num">02</span><span class="work-kind">Data engineering · AWS</span></div>
+        <div class="work-title">TMC performance analytics platform</div>
+        <div class="work-desc">Four traffic operations systems with no shared keys and inconsistent identities, unified into per-operator response metrics on a serverless AWS pipeline with automated reporting.</div>
+        <div class="work-foot"><span class="work-metric">4 source systems unified · sole technologist</span><span class="chips" style="margin:0"><span class="chip">Lambda</span><span class="chip">MySQL</span><span class="chip">Looker Studio</span></span></div>
+      </a>
+
+      <a class="work-card" href="multi-agent-platform/">
+        <div class="work-top"><span class="work-num">03</span><span class="work-kind">AI systems · Multi-agent · Operations</span></div>
+        <div class="work-title">A multi-agent AI platform, run like production</div>
+        <div class="work-desc">Sensitivity-based routing between local and cloud models that fails closed, scheduled agent runs across two machines and monitoring built to catch the failures that never throw an error.</div>
+        <div class="work-foot"><span class="work-metric">~30 scheduled jobs · 19 agents · since March 2026</span><span class="chips" style="margin:0"><span class="chip">Claude Code</span><span class="chip">Ollama</span><span class="chip">Python</span></span></div>
+      </a>
+
+      <a class="work-card" href="healthcare-cost-prediction/">
+        <div class="work-top"><span class="work-num">04</span><span class="work-kind">Data science · Health analytics</span></div>
+        <div class="work-title">Who is costing the plan the most? Predicting healthcare cost</div>
+        <div class="work-desc">Master's capstone on 10,578 adults from MEPS 2022: cost multipliers for chronic conditions, plus a high-cost classifier read honestly as a ranking tool for self-insured employers.</div>
+        <div class="work-foot"><span class="work-metric">Diabetes 2.77× cost · AUC 0.71 · ~2× lift</span><span class="chips" style="margin:0"><span class="chip">statsmodels</span><span class="chip">scikit-learn</span><span class="chip">pandas</span></span></div>
+      </a>
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-note">Client names and systems withheld where the work belongs to a client · Jared Roso</span>
+  </footer>
+
+</div>
+</body>
+</html>

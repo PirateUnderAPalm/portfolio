@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare Cost Prediction | Jared Roso</title>
+<meta name="description" content="MS capstone: modeling which chronic conditions drive annual healthcare cost for self-insured employers, using 10,578 adults from MEPS 2022.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="page">
+
+  <nav class="topnav"><a href="../">&larr; All work</a></nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="tag">Case study &nbsp;·&nbsp; Data science &nbsp;·&nbsp; Health analytics</span>
+      <h1>Who is costing the plan the most? <em>Predicting</em> healthcare cost</h1>
+      <p class="hero-sub">My master's capstone. Using 10,578 adults from the federal MEPS 2022 survey, I modeled what each chronic condition adds to a person's annual healthcare cost and built a classifier that ranks people by their risk of landing in the top 20% of spenders, for a self-insured employer deciding where wellness money goes.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="meta-label">Program</span><span class="meta-value">M.S. Data Analytics (Data Science), WGU</span></div>
+        <div class="meta-item"><span class="meta-label">Data</span><span class="meta-value">MEPS 2022 (AHRQ, public)</span></div>
+        <div class="meta-item"><span class="meta-label">Models</span><span class="meta-value">OLS, logistic regression, random forest benchmarks</span></div>
+        <div class="meta-item"><span class="meta-label">Completed</span><span class="meta-value">June 2026</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">01 · The problem</div>
+    <h2>Self-insured employers pay every claim, and a few people drive most of it</h2>
+    <p>A self-insured employer pays employee healthcare claims straight out of operating funds, so every claim dollar is a budget dollar. Spending is heavily concentrated in a small share of people, yet wellness budgets usually get spread evenly across the whole workforce.</p>
+    <p>The question was whether public data could show which conditions drive cost, by how much and for whom, and whether a model could pick out likely high-cost people well enough to aim outreach at them.</p>
+    <div class="callout plain">
+      <div class="callout-label">Pre-registered targets</div>
+      <p>The cost model had to explain more than 10% of the variation in annual cost, and the high-cost classifier had to beat 70% accuracy on held-out data. Both were met, and section 05 covers why accuracy turned out to be the wrong headline for the second one.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">02 · Data</div>
+    <h2>A nationally representative survey, cut to clean adult records</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-num">22,431</div><div class="kpi-label">Survey respondents</div><div class="kpi-desc">MEPS HC-243, the 2022 full-year consolidated file from AHRQ.</div></div>
+      <div class="kpi"><div class="kpi-num">10,578</div><div class="kpi-label">Adults analyzed</div><div class="kpi-desc">Age 18+, valid BMI and diagnosis codes, complete cases only.</div></div>
+      <div class="kpi"><div class="kpi-num">9</div><div class="kpi-label">Study variables</div><div class="kpi-desc">Diabetes, hypertension, high cholesterol, BMI, age, sex, race, income and total annual expenditure.</div></div>
+    </div>
+    <p style="margin-top:24px">Cost is heavily right-skewed (a lot of people spend almost nothing and a few spend enormous amounts), so the regression models predict log annual expenditure. That turns each condition's coefficient into a cost multiplier, which is easier for a benefits team to read than a log-dollar figure.</p>
+  </section>
+
+  <section>
+    <div class="section-label">03 · Method</div>
+    <h2>Two models, each answering a different half of the question</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-title">Baseline vs full cost model</div>
+        <div class="step-desc">OLS on log expenditure with demographics only, then with the four metabolic conditions added. Demographics alone explained 20.0% of the variation and the conditions added 5.3 points on top (ΔAIC of −713), so the conditions carry real signal beyond age, sex, race and income.</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-title">Stratified and interaction models</div>
+        <div class="step-desc">The full model was refit separately by sex and by age band (18 to 40, 41 to 60, 61+), plus a version with age × condition interactions to test whether a diagnosis costs more at some ages than others.</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-title">High-cost classifier</div>
+        <div class="step-desc">Logistic regression predicting whether a person lands in the top 20% of annual spending ($12,879 or more), trained on 80% of the data and scored on a stratified 20% holdout.</div>
+      </div></div>
+      <div class="step"><div class="step-num">04</div><div class="step-body">
+        <div class="step-title">Random forest benchmarks for both</div>
+        <div class="step-desc">The random forest regressor hit an R² of 0.89 on training data and 0.21 on the holdout, a clear overfit. OLS held at 0.24 on the holdout. The simpler models generalized better on both tasks, and they're the ones a benefits team can actually read.</div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">04 · Findings</div>
+    <h2>Diabetes drives cost, and hits hardest in younger adults</h2>
+    <table class="data">
+      <tr><th>Condition</th><th class="num">Cost multiplier</th></tr>
+      <tr><td>Diabetes</td><td class="num">2.77×</td></tr>
+      <tr><td>High cholesterol</td><td class="num">1.88×</td></tr>
+      <tr><td>Hypertension</td><td class="num">1.83×</td></tr>
+      <tr><td>BMI (per unit)</td><td class="num">1.01×</td></tr>
+    </table>
+    <p style="margin-top:12px;font-size:13px">Expected annual cost against a similar person without the condition, controlling for age, sex, race and income.</p>
+
+    <div class="kpis" style="margin-top:28px">
+      <div class="kpi"><div class="kpi-num">6.0×</div><div class="kpi-label">Diabetes, ages 18 to 40</div><div class="kpi-desc">The effect shrinks with age (3.7× at 41 to 60, 2.0× at 61+), and the age × diabetes interaction is significant.</div></div>
+      <div class="kpi"><div class="kpi-num">8×</div><div class="kpi-label">Three conditions vs none</div><div class="kpi-desc">Median annual cost of $11,347 with all three diagnoses against $1,422 with none.</div></div>
+      <div class="kpi"><div class="kpi-num">29.5%</div><div class="kpi-label">Variance explained, men</div><div class="kpi-desc">Against 19.2% for women. BMI was significant for women and not for men.</div></div>
+    </div>
+
+    <table class="data">
+      <tr><th>Diagnosed conditions</th><th class="num">People</th><th class="num">Median annual cost</th></tr>
+      <tr><td>None</td><td class="num">4,555</td><td class="num">$1,422</td></tr>
+      <tr><td>One</td><td class="num">2,692</td><td class="num">$3,566</td></tr>
+      <tr><td>Two</td><td class="num">2,289</td><td class="num">$5,699</td></tr>
+      <tr><td>All three</td><td class="num">1,042</td><td class="num">$11,347</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-label">05 · Reading the classifier honestly</div>
+    <h2>80% accuracy sounds better than it is</h2>
+    <p>The logistic model scored <strong>80.4% accuracy</strong> on the holdout, which cleared the 70% target. But only 20% of people are high-cost by definition, so a model that predicts "not high-cost" for everyone scores 80% without learning anything. Accuracy was the wrong yardstick for a target this imbalanced, and I'd pick a different one if I set the targets again.</p>
+    <p>The numbers that matter are how well it ranks people and what you get when you act on that ranking:</p>
+    <div class="kpis four">
+      <div class="kpi"><div class="kpi-num">0.71</div><div class="kpi-label">AUC</div><div class="kpi-desc">Logistic regression. The random forest scored 0.67.</div></div>
+      <div class="kpi"><div class="kpi-num">39%</div><div class="kpi-label">Hit rate, top-scored 20%</div><div class="kpi-desc">Of the people it ranks highest, 39% really are high-cost.</div></div>
+      <div class="kpi"><div class="kpi-num">~2×</div><div class="kpi-label">Lift over random</div><div class="kpi-desc">Random selection would hit 20%.</div></div>
+      <div class="kpi"><div class="kpi-num">10%</div><div class="kpi-label">Recall at default cutoff</div><div class="kpi-desc">Left at 0.5, it flags very few people. Use it as a ranker.</div></div>
+    </div>
+    <div class="callout">
+      <p>Used the way an employer would actually use it (score everyone, sort and reach out to the top fifth first), outreach lands on a high-cost person about twice as often as spreading it evenly. That's a useful screening tool. It doesn't predict any one person's cost, and nine demographic and condition variables were never going to.</p>
+    </div>
+    <p style="margin-top:16px;font-size:13px">The ranking and recall figures come from re-running the submitted model after the capstone. The submitted presentation reported accuracy and AUC.</p>
+  </section>
+
+  <section>
+    <div class="section-label">06 · Limits and next steps</div>
+    <h2>What these models can and can't support</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Limits</h3>
+        <ul class="list">
+          <li>One year of cross-sectional data, so it shows association and not cause. Treating diabetes may or may not lower cost.</li>
+          <li>Diagnoses are self-reported, which undercounts conditions in people without regular care.</li>
+          <li>Survey weights weren't applied, so results describe this sample and not precise national estimates.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Next steps</h3>
+        <ul class="list">
+          <li>Add insurance type, visit counts and prescription spend, all in MEPS and unused here.</li>
+          <li>Use the two-year MEPS panel to follow the same people and see whether a new diagnosis raises their cost.</li>
+          <li>Tune the classifier threshold for the budget an employer actually has, and report precision at that cutoff.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">07 · Stack</div>
+    <h2>Standard Python data science, start to finish</h2>
+    <div class="stack">
+      <div class="stack-item"><div class="stack-cat">Language</div><div class="stack-name">Python</div></div>
+      <div class="stack-item"><div class="stack-cat">Data</div><div class="stack-name">pandas</div></div>
+      <div class="stack-item"><div class="stack-cat">Statistics</div><div class="stack-name">statsmodels</div></div>
+      <div class="stack-item"><div class="stack-cat">ML</div><div class="stack-name">scikit-learn</div></div>
+      <div class="stack-item"><div class="stack-cat">Charts</div><div class="stack-name">matplotlib / seaborn</div></div>
+      <div class="stack-item"><div class="stack-cat">Ingest</div><div class="stack-name">pyreadstat</div></div>
+      <div class="stack-item"><div class="stack-cat">Source</div><div class="stack-name">MEPS HC-243</div></div>
+      <div class="stack-item"><div class="stack-cat">Program</div><div class="stack-name">WGU D606</div></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-note">Public data, no data-use agreement required · Jared Roso</span>
+    <a href="../">&larr; All work</a>
+  </footer>
+
+</div>
+</body>
+</html>

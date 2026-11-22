@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Ticket Routing | Jared Roso</title>
+<meta name="description" content="A production AI routing service for field maintenance tickets that checks the model's reasoning against its answer before anything is assigned.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="page">
+
+  <nav class="topnav"><a href="../">&larr; All work</a></nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="tag">Case study &nbsp;·&nbsp; AI systems &nbsp;·&nbsp; Production</span>
+      <h1>Field device ticket <em>classifier</em> with a reasoning cross-check</h1>
+      <p class="hero-sub">An AI routing service for a state transportation agency's field maintenance tickets. It runs unattended for $5 to $10 a month in API costs, and before it assigns anything it checks whether the model's reasoning actually agrees with the model's answer.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Solutions architect, sole developer</span></div>
+        <div class="meta-item"><span class="meta-label">Client</span><span class="meta-value">State transportation agency</span></div>
+        <div class="meta-item"><span class="meta-label">In production</span><span class="meta-value">Since early 2026</span></div>
+        <div class="meta-item"><span class="meta-label">API cost</span><span class="meta-value">$5 to $10 / month at ~100 tickets a day</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">01 · The problem</div>
+    <h2>A 15-minute routing window that manual checks kept missing</h2>
+    <p>The agency maintains thousands of roadside devices (cameras, message signs, detection sensors, ramp meters) across hundreds of miles of highway. When one fails a ticket opens in the service desk, and it has to reach the right team within 15 business-hour minutes: electrical, communications, software or vendor escalation.</p>
+    <p>The catch was downstream. The maintenance contractor's system only picks up a ticket once it has a device record attached, so an unrouted ticket was invisible to it while the clock kept running. Nobody found out until a field response was already late.</p>
+    <div class="callout">
+      <p>People were checking the queue about every 10 minutes, each. The window was 15. That margin doesn't survive a busy shift, a lunch break or a weekend on call, so the system had to poll faster than any person and route before the window closed.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">02 · The key decision</div>
+    <h2>The cheapest AI call is the one you don't make</h2>
+    <p>The obvious build was to send every ticket through the model. The better question was what the ticket already knew before the model ever saw it.</p>
+    <p>Operators could pick the device type and routing group from a dropdown when they opened a ticket. If they had, the answer was already there and there was nothing to guess. Checking that field first meant about 85% of tickets never reached the classifier at all.</p>
+    <div class="callout plain">
+      <div class="callout-label">The routing decision</div>
+      <p>Poll every 2 minutes → operator already picked a device? Assign it, no API call → otherwise classify with Claude Haiku and keep its reasoning → pull the routing signal out of that reasoning with regex → compare it to the declared answer → a match assigns, a mismatch goes to a human review queue with the reasoning attached.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">03 · Two models, two jobs</div>
+    <h2>The right model for each task</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="cell-label">Classifier</div>
+        <div class="cell-title">Claude Haiku</div>
+        <div class="cell-desc">Runs on every unassigned ticket on a 2-minute cycle. Picked for speed and cost: at about 100 tickets a day the bill stays between $5 and $10 a month. The prompt asks for reasoning before the decision, and that reasoning is what the cross-check reads.</div>
+        <div class="cell-stat">~100 tickets/day · $5 to $10/mo · $20 hard cap</div>
+      </div>
+      <div class="card">
+        <div class="cell-label">Narrative drafts</div>
+        <div class="cell-title">Claude Sonnet</div>
+        <div class="cell-desc">Drafts the formal explanations for long-running delays in the monthly compliance report. That text goes to contract leadership, so writing quality matters more than cost on a once-a-month batch.</div>
+        <div class="cell-stat">Monthly batch · a manager edits and approves every draft</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">04 · Architecture</div>
+    <h2>Three small services on one Linux host</h2>
+    <div class="grid2">
+      <div class="cell">
+        <div class="cell-label">Service 1</div>
+        <div class="cell-title">Poller and classifier</div>
+        <div class="cell-desc">APScheduler runs every 2 minutes, pulls unassigned tickets from the service desk REST API with a service-account token, checks the operator's pre-selection, then routes or classifies and writes the result to SQLite.</div>
+        <div class="chips"><span class="chip">APScheduler</span><span class="chip">REST API</span><span class="chip">SQLite</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Service 2</div>
+        <div class="cell-title">Pickup monitor</div>
+        <div class="cell-desc">Watches for the contractor system's confirmation on each routed ticket and records the business-hours time from creation to pickup. That's the number the response requirement is measured on.</div>
+        <div class="chips"><span class="chip">business-hours calc</span><span class="chip">SLA tracking</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Service 3</div>
+        <div class="cell-title">Dashboard</div>
+        <div class="cell-desc">A Flask app with the human review queue (mismatches with the full reasoning trace), compliance metrics, monthly report generation and the screen where a manager edits and locks the delay narratives.</div>
+        <div class="chips"><span class="chip">Flask</span><span class="chip">review queue</span><span class="chip">Excel export</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Validation layer</div>
+        <div class="cell-title">Reasoning cross-check</div>
+        <div class="cell-desc">Regex reads routing keywords out of Haiku's reasoning and works out which queue that reasoning points to. If it disagrees with the queue the model declared, the ticket goes to a person. This catches the model that reasons its way to the right answer and then outputs a different one.</div>
+        <div class="chips"><span class="chip">regex</span><span class="chip">coherence check</span><span class="chip">audit trail</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">05 · Pipeline</div>
+    <h2>From a new ticket to the right team in under 2 minutes</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-title">Poll the service desk every 2 minutes</div>
+        <div class="step-desc">Replaced a manual check roughly every 10 minutes per person.</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-title">Deterministic gate on the operator's pick</div>
+        <div class="step-desc">If the device dropdown is filled in, assign it with no model involved. About 85% of tickets leave the pipeline here.</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-title">Classify the rest with reasoning kept</div>
+        <div class="step-desc">The remaining ~15% go to Claude Haiku. The reasoning text is saved, because it's the input to the next step.</div>
+      </div></div>
+      <div class="step"><div class="step-num">04</div><div class="step-body">
+        <div class="step-title">Cross-check reasoning against the answer</div>
+        <div class="step-desc">Above a 70% confidence threshold with a matching signal, the ticket is assigned. Low confidence or any disagreement sends it to the review queue.</div>
+      </div></div>
+      <div class="step"><div class="step-num">05</div><div class="step-body">
+        <div class="step-title">Confirm pickup and record the time</div>
+        <div class="step-desc">The monitor waits for the contractor system's confirmation and logs the real business-hours transfer time.</div>
+      </div></div>
+      <div class="step"><div class="step-num">06</div><div class="step-body">
+        <div class="step-title">Monthly report with drafted narratives</div>
+        <div class="step-desc">The dashboard builds the compliance report with an exclusion audit trail (aborted, duplicate, merged and cancelled tickets, each with a logged reason). Sonnet drafts delay explanations and a manager edits and locks them before they go out.</div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">06 · Results</div>
+    <h2>Cheap to run, fast to route and built to be left alone</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-num">85%</div><div class="kpi-label">Routed with no model call</div><div class="kpi-desc">Operator picks assigned directly. The model only sees the tickets that actually need it.</div></div>
+      <div class="kpi"><div class="kpi-num">8.7 min</div><div class="kpi-label">Average time to pickup</div><div class="kpi-desc">Business hours, ticket creation to contractor pickup, against a 15-minute window.</div></div>
+      <div class="kpi"><div class="kpi-num">$5 to $10</div><div class="kpi-label">Monthly API cost</div><div class="kpi-desc">With a $20 hard cap. A small fraction of the penalty exposure it protects.</div></div>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>Test mode before production</h3>
+        <ul class="list">
+          <li>All new AI routing started in test mode with every ticket sent to review</li>
+          <li>Auto-assign was switched on only after 50+ tickets at 90% accuracy or better</li>
+          <li>Same rule for the narratives: the model drafts and a person approves before anything is locked</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Low maintenance on purpose</h3>
+        <ul class="list">
+          <li>systemd services, SQLite and one Linux host, with no infrastructure beyond the API</li>
+          <li>The same collector, scheduler, SQLite and Flask pattern was reused for other monitoring on the contract</li>
+          <li>One codebase and one deployment for all of it</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">07 · What this shows</div>
+    <h2>The failure label-only benchmarks miss</h2>
+    <p>Most classifier evaluations grade the output label against a labeled test set. That measurement is needed, and it has a blind spot. A model whose reasoning points at the right queue while its declared answer points somewhere else will pass any test that only looks at the label.</p>
+    <p>On a 15-minute window with penalties attached, a silent misroute costs real money. The cross-check is one regex pass. The review queue hands the uncertain cases to a person with the reasoning attached, so no failure goes unseen.</p>
+    <p>I've carried the same rule into every classification system I've built since: the model classifies, regex checks the reasoning and any mismatch goes to a human. Escalation is in the design from day one instead of being added after the first incident.</p>
+  </section>
+
+  <section>
+    <div class="section-label">08 · Stack</div>
+    <h2>Small, durable and boring in the right places</h2>
+    <div class="stack">
+      <div class="stack-item"><div class="stack-cat">Language</div><div class="stack-name">Python</div></div>
+      <div class="stack-item"><div class="stack-cat">Classifier</div><div class="stack-name">Claude Haiku</div></div>
+      <div class="stack-item"><div class="stack-cat">Narratives</div><div class="stack-name">Claude Sonnet</div></div>
+      <div class="stack-item"><div class="stack-cat">Scheduling</div><div class="stack-name">APScheduler</div></div>
+      <div class="stack-item"><div class="stack-cat">Dashboard</div><div class="stack-name">Flask</div></div>
+      <div class="stack-item"><div class="stack-cat">Storage</div><div class="stack-name">SQLite</div></div>
+      <div class="stack-item"><div class="stack-cat">Services</div><div class="stack-name">systemd</div></div>
+      <div class="stack-item"><div class="stack-cat">Host</div><div class="stack-name">Linux</div></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-note">Client name and systems withheld · Jared Roso</span>
+    <a href="../">&larr; All work</a>
+  </footer>
+
+</div>
+</body>
+</html>

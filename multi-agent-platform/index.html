@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Agent AI Platform | Jared Roso</title>
+<meta name="description" content="A personal multi-agent AI platform with sensitivity-based model routing, scheduled agent runs and monitoring built to catch silent failure.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Epilogue:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="page">
+
+  <nav class="topnav"><a href="../">&larr; All work</a></nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="tag">Case study &nbsp;·&nbsp; AI systems &nbsp;·&nbsp; Multi-agent &nbsp;·&nbsp; Operations</span>
+      <h1>A multi-agent AI platform, <em>run like production</em></h1>
+      <p class="hero-sub">My own AI operating environment, which I call the Forge. It routes each task to a local or cloud model by how sensitive the data is, runs agent work on a schedule across two machines and watches itself for the kind of failure that doesn't throw an error.</p>
+      <div class="meta-row">
+        <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Architect, sole developer</span></div>
+        <div class="meta-item"><span class="meta-label">Running since</span><span class="meta-value">March 2026</span></div>
+        <div class="meta-item"><span class="meta-label">Scheduled jobs</span><span class="meta-value">~30 across two machines</span></div>
+        <div class="meta-item"><span class="meta-label">Agents</span><span class="meta-value">19</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">01 · The problem</div>
+    <h2>A chat window forgets everything and checks nothing</h2>
+    <p>Most day-to-day AI use happens in a chat window. Context resets every session, nothing runs while you're asleep and nobody checks whether the answer was right. I wanted the other version: an environment that keeps what it learns, runs real work on a schedule, sends each task to the right model and tells me when something breaks.</p>
+    <p>It handles several kinds of work with different handling rules, so some tasks may use a cloud model and some have to stay on hardware I own. Getting that right, and proving it stays right, turned out to be most of the engineering.</p>
+  </section>
+
+  <section>
+    <div class="section-label">02 · Model routing</div>
+    <h2>Every task goes to a model by sensitivity, and restricted work fails closed</h2>
+    <p>Tasks are classified before dispatch. Summaries, classification, extraction and formatting run on a local model on a 12GB consumer GPU at no API cost. Code, architecture and hard reasoning go to Claude. <strong>11 task types</strong> route to local models, and <strong>4 restricted tiers</strong> refuse to run if their local model is down instead of falling back to a cloud model.</p>
+    <div class="callout">
+      <p>A fallback chain that can move work to a less private model without telling anyone fails at the exact moment the protection matters. So on a restricted tier an outage is an error, never a reason to downgrade, and no task can opt itself out of its own restriction.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">03 · Operations</div>
+    <h2>The part a demo never shows: monitoring that tells the truth</h2>
+    <p>Building the agents was the easy half. The harder half was finding out how often a system can look healthy while doing nothing useful. Three cases did the most to change how I build.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-title">A model throwing away most of its input with no error</div>
+        <div class="step-desc">The local model server defaulted to a 4K context window and silently truncated anything longer. No error, just answers built from the tail end of the document, for months. In a controlled test on a 75K-token input, an 8K-context model found 0 of 4 target facts and the corrected 128K configuration found 4 of 4. Health checks now catch truncation directly.</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-title">A backup check that the clock could satisfy</div>
+        <div class="step-desc">One backup was judged fresh by its archive's filename, which a timestamp regenerated every night whether or not the backup inside worked. It reported healthy for twelve days while the database inside was frozen. The fix reads the modification time of the database inside the archive, which only a working backup can advance.</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-title">A machine can't report its own silence</div>
+        <div class="step-desc">Heartbeats and alerts that run on the box being watched go quiet at the same moment it does. A watchdog on a separate machine now covers 8 backup jobs and tells three states apart: failed, stale and never reported. Each machine checks the other, and neither is trusted to certify itself.</div>
+      </div></div>
+    </div>
+    <div class="callout plain">
+      <div class="callout-label">The rule that came out of it</div>
+      <p>An untested control is a hypothesis. Every boundary and alarm gets checked by attempting the thing it should stop, with throwaway data so a failed test isn't itself the breach, and every alert is verified by reading it back at its destination rather than trusting a return code.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">04 · Architecture</div>
+    <h2>Context, memory, scheduled agents and routing</h2>
+    <div class="grid2">
+      <div class="cell">
+        <div class="cell-label">Context</div>
+        <div class="cell-title">A bootstrap under 300 lines</div>
+        <div class="cell-desc">Identity, active projects, agent roster and session protocol load in under a minute. Everything else is modular and pulled in on demand, so the first task doesn't start with half the context window already spent.</div>
+        <div class="chips"><span class="chip">modular rules</span><span class="chip">on-demand load</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Memory</div>
+        <div class="cell-title">Version-controlled and model-portable</div>
+        <div class="cell-desc">Facts, decisions and discovered quirks persist across sessions as plain markdown in git, with no dependence on a provider's memory feature. A finding gets recorded once and never rediscovered.</div>
+        <div class="chips"><span class="chip">markdown</span><span class="chip">git</span><span class="chip">cross-session</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Scheduled agents</div>
+        <div class="cell-title">Explicit exits and a circuit breaker</div>
+        <div class="cell-desc">Unattended agent runs work through multi-step tasks with a done condition on every phase, so there are no open-ended loops. Three consecutive failures on the same call halts the run and writes a blocked checkpoint. Nothing commits until a person approves it.</div>
+        <div class="chips"><span class="chip">orchestrator → workers</span><span class="chip">circuit breaker</span><span class="chip">human approval</span></div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Routing</div>
+        <div class="cell-title">Local first where quality allows</div>
+        <div class="cell-desc">Simple, high-volume work stays on the local GPU and the cost of every cloud call is logged per task. The model is treated as a component with a budget.</div>
+        <div class="chips"><span class="chip">Ollama</span><span class="chip">Claude</span><span class="chip">cost logging</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">05 · What runs on it</div>
+    <h2>Jobs that run whether or not I'm at the keyboard</h2>
+    <table class="data">
+      <tr><th>When</th><th>Job</th></tr>
+      <tr><td>6:30 every morning</td><td>Briefing assembled from project state and posted to Slack with no manual input</td></tr>
+      <tr><td>Nightly</td><td>Research pipeline that pulls transcripts from YouTube channels I follow, extracts what's useful and files it into a searchable knowledge base</td></tr>
+      <tr><td>On demand</td><td>Meeting transcription with Whisper on the local GPU, so recordings never leave the network (35 meetings so far)</td></tr>
+      <tr><td>Always on</td><td>A Slack bot answering from the local model and escalating to Claude only for hard requests</td></tr>
+      <tr><td>Nightly</td><td>Encrypted backups to local and off-site storage, checked from a second machine</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-label">06 · What this shows</div>
+    <h2>The skills that matter once AI leaves the demo</h2>
+    <div class="cards">
+      <div class="card"><h3>Specification</h3><ul class="list"><li>Every agent file and task is a spec that has to run with no one to ask at 2am. Ambiguity at spec time becomes a wrong build overnight.</li></ul></div>
+      <div class="card"><h3>Evaluation</h3><ul class="list"><li>A two-line approach statement before execution catches wrong directions cheaply, and each catch becomes a written rule so it doesn't repeat.</li></ul></div>
+      <div class="card"><h3>Orchestration</h3><ul class="list"><li>An orchestrator calls workers and agents never call each other, with handoffs, exit conditions and a circuit breaker on every run.</li></ul></div>
+      <div class="card"><h3>Failure diagnosis</h3><ul class="list"><li>Each failure is sorted first: a bad instruction, a model reasoning error or a tool error. Each one has a different fix, and debugging the wrong category wastes the session.</li></ul></div>
+      <div class="card"><h3>Data-sensitivity design</h3><ul class="list"><li>Routing by sensitivity that fails closed, secrets kept out of tool-server environments and controls proven by test instead of assumed.</li></ul></div>
+      <div class="card"><h3>Context and cost</h3><ul class="list"><li>Research subagents hand back summaries instead of raw file dumps, the bootstrap stays small and local models absorb the high-volume work.</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">07 · Stack</div>
+    <h2>Hybrid local and cloud, on hardware I own</h2>
+    <div class="stack">
+      <div class="stack-item"><div class="stack-cat">Agent framework</div><div class="stack-name">Claude Code</div></div>
+      <div class="stack-item"><div class="stack-cat">Local models</div><div class="stack-name">Ollama / Gemma</div></div>
+      <div class="stack-item"><div class="stack-cat">Language</div><div class="stack-name">Python</div></div>
+      <div class="stack-item"><div class="stack-cat">Speech</div><div class="stack-name">Whisper</div></div>
+      <div class="stack-item"><div class="stack-cat">Messaging</div><div class="stack-name">Slack API</div></div>
+      <div class="stack-item"><div class="stack-cat">Scheduling</div><div class="stack-name">cron / systemd / Task Scheduler</div></div>
+      <div class="stack-item"><div class="stack-cat">GPU</div><div class="stack-name">RTX 3060 12GB</div></div>
+      <div class="stack-item"><div class="stack-cat">OS</div><div class="stack-name">Linux + Windows</div></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span class="footer-note">Personal build · In daily use since March 2026 · Jared Roso</span>
+    <a href="../">&larr; All work</a>
+  </footer>
+
+</div>
+</body>
+</html>
